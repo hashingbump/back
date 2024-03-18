@@ -3,8 +3,7 @@ import collections from '../database/collection.js';
 
 const adminSchema = new mongoose.Schema({
     email: String,
-    password: String,
-    salt: String
+    password: String
 });
 
 const AdminsModel = mongoose.model(collections.ADMINS, adminSchema);

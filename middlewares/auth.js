@@ -1,7 +1,6 @@
 import UsersModel from "../model/users.js";
 import AdminsModel from "../model/admins.js";
 import refreshTokensModel from "../model/refreshTokens.js";
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -10,14 +9,10 @@ dotenv.config({ path: '../data.env' });
 const authMiddleware = {
     loginUser: async (req, res, next) => {
         try {
-            const { email } = req.body;
-            const passwordUser= req.body.password;
+            const { email, password } = req.body;
 
             const user = await UsersModel.findOne({ email });
-
             if (!user) throw new Error('Tai khoan khong ton tai');
-            
-            const password = bcrypt.hashSync(passwordUser, user.salt);
 
             if (user.password !== password) throw new Error('Mat khau sai');
             
@@ -36,14 +31,10 @@ const authMiddleware = {
     },
     loginAdmin: async (req, res, next) => {
          try {
-            const { email } = req.body;
-            const passwordAdmin = req.body.password;
+            const { emai, password } = req.body;
 
             const admin = await AdminsModel.findOne({ email });
-
             if (!admin) throw new Error('Tai khoan khong ton tai');
-
-            const password = bcrypt.hashSync(passwordAdmin, admin.salt);
 
             if (admin.password !== password) throw new Error('Mat khau sai');
             

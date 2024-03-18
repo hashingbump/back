@@ -1,6 +1,5 @@
 import UsersModel from '../model/users.js';
 import {checkNullOrUndefined, verifyFields} from '../checkInput.js';
-import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '../data.env' });
@@ -8,11 +7,7 @@ dotenv.config({ path: '../data.env' });
 const usersController = {
     createNewUser: async (req, res) => {
         try {
-            const { userName, email, birthdate } = req.body;
-            const passwordUser= req.body.password;
-
-            const salt = bcrypt.genSaltSync(10);
-            const password = bcrypt.hashSync(passwordUser, salt);
+            const { userName, email, password, birthdate } = req.body;
             
             const Fields = Object.keys(req.body);
             const ModelFields = Object.keys(UsersModel.schema.paths);
@@ -28,7 +23,6 @@ const usersController = {
                 userName,
                 email,
                 password,
-                salt,
                 birthdate
             });
             res.status(201).send({ data: createdUser});
