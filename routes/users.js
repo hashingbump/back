@@ -1,30 +1,43 @@
 import {Router} from 'express';
-import cloudinary from 'cloudinary';
 import multer from 'multer';
+import usersController from '../controllers/users.js';
 import postsController from '../controllers/posts.js';
 import commentsController from '../controllers/comments.js';
+import authMiddleware from '../middlewares/auth.js';
 
 const userRouter = Router();
-
-cloudinary.config({
-    cloud_name: 'dsahpruxx',
-    api_key: '652186324369761',
-    api_secret: 'GwjubyXq017h99uVYnb9tk14YKo'
-});
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Viết API cho phép user tạo bài post (thêm bài post, xử lý id tương tự user).
+userRouter.post('/add', usersController.createNewUser);
+
+userRouter.post('/update', upload.single('file'), usersController.updateUser);
+
+userRouter.post('/delete', usersController.deleteUser);
+
+userRouter.get('/id', usersController.getUserId);
+
 userRouter.post('/posts/add', upload.array('files'), postsController.createNewPost);
 
-// Viết API cho phép user chỉnh sửa lại bài post (chỉ user tạo bài viết mới được phép chỉnh sửa).
-userRouter.patch('/posts/update/:postId', postsController.updatePost);
+userRouter.post('/posts/:postId', upload.array('files'), postsController.updatePost);
 
-// Viết API cho phép user được comment vào bài post
-userRouter.post('/comments/add', upload.array('files'), commentsController.createNewComment);
+userRouter.get('/posts', postsController.getAllPosts);
 
-// Viết API cho phép user chỉnh sửa comment (chỉ user tạo comment mới được sửa)
-userRouter.patch('/comments/update/:commentId', commentsController.updateComment);
+userRouter.get('/posts/personal', postsController.getPersonalPosts);
+
+userRouter.post('/posts/delete/:postId', postsController.deletePost);
+
+userRouter.post('/posts/deleteAll', postsController.deleteAllPosts)
+
+userRouter.post('/deleteAll', usersController.deleteAllUser);
+
+userRouter.get('/verifyToken', authMiddleware.authenticate);
+
+userRouter.post('/refreshToken', authMiddleware.RefreshToken);
+
+userRouter.post('/refreshToken/delete', authMiddleware.deleteRefreshToken);
+
+userRouter.post('/login', authMiddleware.loginUser);
 
 export default userRouter;

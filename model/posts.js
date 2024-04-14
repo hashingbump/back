@@ -2,14 +2,12 @@ import mongoose from 'mongoose';
 import collections from '../database/collection.js';
 
 const postSchema = new mongoose.Schema({
-    content: String,
-    author:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:'users'
-    },
+    userId: String,
+    userName: String,
+    avatar: String,
+    title: String,
     album:[{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:'albums'
+        type: String
     }],
     createdAt: {
         type: Date,

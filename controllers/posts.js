@@ -1,8 +1,11 @@
 import PostsModel from '../model/posts.js';
 import CommentsModel from '../model/comments.js';
 import UsersModel from '../model/users.js';
-import AlbumsModel from '../model/albums.js';
 import cloudinary from 'cloudinary';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '../data.env' });
 
 cloudinary.config({
     cloud_name: 'dsahpruxx',
@@ -13,16 +16,17 @@ cloudinary.config({
 const postsController = {
     createNewPost: async (req, res) => {
         try {
-            const { authorId, content } = req.body;
+            const { title } = req.body;
             const listFile = req.files;
+            const token = req.headers.authorization.split(' ')[1];
+
+            const decodedToken = jwt.verify(token, process.env.SECRET);
+            const user = await UsersModel.findById(decodedToken.userId);
+
             let albumUrls = [];
 
-            if (!authorId || !content || !listFile)
+            if (!user || !title || !listFile)
                 throw new Error("Du lieu dau vao co loi.");
-
-            const author = await UsersModel.findById(authorId);
-            if (!author)
-                throw new Error("Author not found.");
 
             for(const file of listFile){
                 const dataUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
@@ -33,18 +37,13 @@ const postsController = {
                     resource_type: 'auto',
                 });
 
-                const album = new AlbumsModel({
-                    url: result.secure_url,
-                    type: result.resource_type
-                });
-                await album.save();
-
-                albumUrls.push(album._id);
+                albumUrls.push(result.secure_url);
             }
-
             const post = new PostsModel({
-                content: content,
-                author: author._id, 
+                userId: user._id,
+                userName: user.userName,
+                avatar: user.avatar,
+                title: title,
                 album: albumUrls
             });
             const savedPost = await post.save();
@@ -57,25 +56,100 @@ const postsController = {
     updatePost: async(req, res) => {
         try {
             const { postId } = req.params;
-            const { authorId, content } = req.body;
-    
-            if (!authorId || !content)
+            const { title } = req.body;
+            const listFile = req.files;
+            let albumUrls = [];
+
+            const token = req.headers.authorization.split(' ')[1];
+
+            const decodedToken = jwt.verify(token, process.env.SECRET);
+            const user = await UsersModel.findById(decodedToken.userId);
+
+            if ( !user )
+                throw new Error("Khong tim thay tac gia");
+            
+            if ( !title || !listFile || !postId )
                 throw new Error("Du lieu dau vao co loi.");
+
+            for(const file of listFile){
+                const dataUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+                const fileName = file.originalname.split('.')[0];
+        
+                const result = await cloudinary.uploader.upload(dataUrl, {
+                    public_id: fileName,
+                    resource_type: 'auto',
+                });
+
+                albumUrls.push(result.secure_url);
+            }
     
             const existPost = await PostsModel.findById(postId);
             if (!existPost)
                 throw new Error('Post is not found');
 
-            if (existPost.author._id.toString() !== authorId)
-                throw new Error('Ban khong co quyen chinh sua');
-    
-            existPost.content = content;
+            existPost.userId = user._id;
+            existPost.userName = user.userName;
+            existPost.avatar = user.avatar;
+            existPost.title = title;
+            existPost.album = albumUrls;
             await existPost.save();
     
             res.status(200).send({ data: existPost });
     
         } catch (error) {
             res.status(403).send({ message: error.message });
+        }
+    },
+    getAllPosts: async (req, res) => {
+        try {
+            let post = await PostsModel.find();
+    
+            if(!post)
+                throw new Error('Lay post that bai');
+    
+            res.status(200).send({ data: post });
+    
+        } catch (error) {
+            res.status(500).send({ message: 'Internal server error' });
+        }
+    },
+    getPersonalPosts: async (req, res) => {
+        try {
+            const token = req.headers.authorization.split(' ')[1];
+
+            const decodedToken = jwt.verify(token, process.env.SECRET);
+
+            let post = await PostsModel.find({userId: decodedToken.userId});
+    
+            if(!post)
+                throw new Error('Lay post that bai');
+    
+            res.status(200).send({ data: post });
+    
+        } catch (error) {
+            res.status(500).send({ message: 'Internal server error' });
+        }
+    },
+    deletePost: async (req, res) => {
+        try {
+            const { postId } = req.params;
+            const result = await PostsModel.deleteOne({ _id: postId });
+            
+            if (result.deletedCount === 1)
+                res.status(200).send({ message: "Xóa bai Post thành công" });
+            else 
+                res.status(404).send({ message: "Không tìm thấy bai Post để xóa" });
+        } catch (error) {
+            res.status(500).send({ message: "Đã có lỗi xảy ra khi xóa bai Post" });
+        }
+    },
+    deleteAllPosts: async (req, res) => {
+        try {
+            const result = await PostsModel.deleteMany();
+    
+            return res.status(200).send({ message: "Xóa tat ca dữ liệu user thành công" });
+        } catch (error) {
+            res.status(500).send({ message: "Đã có lỗi xảy ra khi xóa người dùng" });
         }
     },
     getposts_3comments: async (req, res) => {
