@@ -3,9 +3,6 @@ import {checkNullOrUndefined} from '../checkInput.js';
 import bcrypt from 'bcrypt';
 import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: '../data.env' });
 
 cloudinary.config({
     cloud_name: 'dsahpruxx',
@@ -49,7 +46,7 @@ const usersController = {
 
             const token = req.headers.authorization.split(' ')[1];
 
-            const decodedToken = jwt.verify(token, process.env.SECRET);
+            const decodedToken = jwt.verify(token, 'hoan');
             const user = await UsersModel.findById(decodedToken.userId);
 
             const dataUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
@@ -75,7 +72,7 @@ const usersController = {
         try {
             const token = req.headers.authorization.split(' ')[1];
 
-            const decodedToken = jwt.verify(token, process.env.SECRET);
+            const decodedToken = jwt.verify(token, 'hoan');
     
             const result = await UsersModel.deleteOne({ _id: decodedToken.userId });
             
@@ -92,7 +89,7 @@ const usersController = {
         try {
             const token = req.headers.authorization.split(' ')[1];
 
-            const decodedToken = jwt.verify(token, process.env.SECRET);
+            const decodedToken = jwt.verify(token, 'hoan');
 
             res.json({data: decodedToken.userId });
         } catch (error) {

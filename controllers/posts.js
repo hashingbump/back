@@ -3,9 +3,6 @@ import CommentsModel from '../model/comments.js';
 import UsersModel from '../model/users.js';
 import cloudinary from 'cloudinary';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: '../data.env' });
 
 cloudinary.config({
     cloud_name: 'dsahpruxx',
@@ -20,7 +17,7 @@ const postsController = {
             const listFile = req.files;
             const token = req.headers.authorization.split(' ')[1];
 
-            const decodedToken = jwt.verify(token, process.env.SECRET);
+            const decodedToken = jwt.verify(token, 'hoan');
             const user = await UsersModel.findById(decodedToken.userId);
 
             let albumUrls = [];
@@ -62,7 +59,7 @@ const postsController = {
 
             const token = req.headers.authorization.split(' ')[1];
 
-            const decodedToken = jwt.verify(token, process.env.SECRET);
+            const decodedToken = jwt.verify(token, 'hoan');
             const user = await UsersModel.findById(decodedToken.userId);
 
             if ( !user )
@@ -117,7 +114,7 @@ const postsController = {
         try {
             const token = req.headers.authorization.split(' ')[1];
 
-            const decodedToken = jwt.verify(token, process.env.SECRET);
+            const decodedToken = jwt.verify(token, 'hoan');
 
             let post = await PostsModel.find({userId: decodedToken.userId});
     

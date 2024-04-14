@@ -2,9 +2,6 @@ import UsersModel from "../model/users.js";
 import refreshTokensModel from '../model/refreshTokens.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: '../data.env' });
 
 const authMiddleware = {
     loginUser: async (req, res, next) => {
@@ -19,8 +16,8 @@ const authMiddleware = {
 
             if (!isPasswordValid) throw new Error('Mật khẩu không đúng');
 
-            const accessToken = jwt.sign({ userId: user._id }, process.env.SECRET, { expiresIn: '30m' });
-            const refreshToken = jwt.sign({ userId: user._id }, process.env.REFRESH_SECRET, { expiresIn: '12h' });
+            const accessToken = jwt.sign({ userId: user._id }, 'hoan', { expiresIn: '30m' });
+            const refreshToken = jwt.sign({ userId: user._id }, 'hoanrefresh', { expiresIn: '12h' });
 
             await refreshTokensModel.create({ refreshToken });
 
@@ -36,7 +33,7 @@ const authMiddleware = {
 
             if (!token) res.json({ data: 'Token missing' });
         
-            jwt.verify(token, process.env.SECRET, (err, decoded) => {
+            jwt.verify(token, 'hoan', (err, decoded) => {
                 if (err) {
                     res.json({ data: 'Token invalid' });
                 } else {
@@ -59,12 +56,12 @@ const authMiddleware = {
 
             if (!RFToken) res.json({ message: 'Token is not found' });
 
-            jwt.verify(refreshToken, process.env.REFRESH_SECRET, async (err, data) => {
+            jwt.verify(refreshToken, 'hoanrefresh', async (err, data) => {
                 if (err) {
                     await refreshTokensModel.deleteOne({ refreshToken });
                     res.send("refreshToken da het han");
                 } else {
-                    const accessToken = jwt.sign({ userId: userId }, process.env.SECRET, { expiresIn: '30m' });
+                    const accessToken = jwt.sign({ userId: userId }, 'hoan', { expiresIn: '30m' });
                     res.json({token: accessToken });
                 }
             });
