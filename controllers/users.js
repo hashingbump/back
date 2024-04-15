@@ -27,6 +27,7 @@ const usersController = {
     
             const createdUser = await UsersModel.create({
                 userName,
+                avatar:'https://res.cloudinary.com/dsahpruxx/image/upload/v1713218734/doov6xt6wbzqk5tgdsql.png',
                 email,
                 password: hashedPassword
             });

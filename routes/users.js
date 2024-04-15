@@ -18,6 +18,8 @@ userRouter.post('/delete', usersController.deleteUser);
 
 userRouter.get('/id', usersController.getUserId);
 
+//userRouter.get('/deleteAll', usersController.deleteAllUser);
+
 userRouter.post('/posts/add', upload.array('files'), postsController.createNewPost);
 
 userRouter.post('/posts/:postId', upload.array('files'), postsController.updatePost);
@@ -28,9 +30,7 @@ userRouter.get('/posts/personal', postsController.getPersonalPosts);
 
 userRouter.post('/posts/delete/:postId', postsController.deletePost);
 
-userRouter.post('/posts/deleteAll', postsController.deleteAllPosts)
-
-userRouter.post('/deleteAll', usersController.deleteAllUser);
+//userRouter.get('/posts/deleteAll', postsController.deleteAllPosts);
 
 userRouter.get('/verifyToken', authMiddleware.authenticate);
 
