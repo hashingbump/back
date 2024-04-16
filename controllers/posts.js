@@ -99,12 +99,18 @@ const postsController = {
     },
     getAllPosts: async (req, res) => {
         try {
-            let post = await PostsModel.find();
-    
-            if(!post)
+            let posts = await PostsModel.find();
+//            let post = [];
+
+            if(!posts)
                 throw new Error('Lay post that bai');
-    
-            res.status(200).send({ data: post });
+
+            // for(let i=0; i<posts.length; i++){
+            //     const res = await UsersModel.findById(posts[i].userId);
+            //     if(res) post.push(posts[i]);
+            // }
+
+            res.status(200).send({ data: posts });
     
         } catch (error) {
             res.status(500).send({ message: 'Internal server error' });

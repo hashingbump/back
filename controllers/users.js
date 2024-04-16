@@ -1,4 +1,5 @@
 import UsersModel from '../model/users.js';
+import PostsModel from '../model/posts.js';
 import {checkNullOrUndefined} from '../checkInput.js';
 import bcrypt from 'bcrypt';
 import cloudinary from 'cloudinary';
@@ -37,18 +38,19 @@ const usersController = {
             res.status(403).send({ message: error.message });
         }
     },
-    updateUser: async(req, res) => {
+    updateUser: async (req, res) => {
         try {
-            const {userName, email, password} = req.body;
+            const {userName, password} = req.body;
             const file = req.file;
-
-            const salt = bcrypt.genSaltSync(10);
-            const hashedPassword = bcrypt.hashSync(password, salt);
 
             const token = req.headers.authorization.split(' ')[1];
 
             const decodedToken = jwt.verify(token, 'hoan');
             const user = await UsersModel.findById(decodedToken.userId);
+
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+
+            if (!isPasswordValid) throw new Error('Mật khẩu không đúng');
 
             const dataUrl = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
             const fileName = file.originalname.split('.')[0];
@@ -57,16 +59,27 @@ const usersController = {
                 public_id: fileName,
                 resource_type: 'auto',
             });
-    
-            user.userName = userName;
-            user.avatar = result.secure_url;
-            user.email = email;
-            user.password = hashedPassword;
 
+            user.userName = userName;
+            user.email = user.email;
+            user.avatar = result.secure_url;
+            user.password = user.password;
             await user.save();
-            res.status(201).send({ data: user });
+
+            let posts = await PostsModel.find({userId: decodedToken.userId});
+
+            for(let i=0; i<posts.length; i++){
+                posts[i].userId = posts[i].userId;
+                posts[i].userName = userName;
+                posts[i].avatar = result.secure_url;
+                posts[i].title = posts[i].title;
+                posts[i].album = posts[i].album;
+                await posts[i].save();
+            }
+            
+            res.send({ data: 'Done' });
         } catch (error) {
-            res.status(403).send({ message: error.message });
+            res.send({ data: 'Error' });
         }
     },
     deleteUser: async (req, res) => {
@@ -76,6 +89,8 @@ const usersController = {
             const decodedToken = jwt.verify(token, 'hoan');
     
             const result = await UsersModel.deleteOne({ _id: decodedToken.userId });
+
+            await PostsModel.deleteMany({userId: decodedToken.userId});
             
             if (result.deletedCount === 1)
                 res.status(200).send({ message: "Xóa dữ liệu user thành công" });

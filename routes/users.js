@@ -32,9 +32,11 @@ userRouter.post('/posts/delete/:postId', postsController.deletePost);
 
 //userRouter.get('/posts/deleteAll', postsController.deleteAllPosts);
 
-userRouter.get('/verifyToken', authMiddleware.authenticate);
+userRouter.post('/verifyToken', authMiddleware.authenticate);
 
-userRouter.post('/refreshToken', authMiddleware.RefreshToken);
+userRouter.post('/addAccessToken', authMiddleware.addAccessToken);
+
+userRouter.post('/addRefreshToken', authMiddleware.addRefreshToken);
 
 userRouter.post('/refreshToken/delete', authMiddleware.deleteRefreshToken);
 
