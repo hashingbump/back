@@ -26,7 +26,7 @@ app.use('/login', authMiddleware.loginUser);
 app.use('/users', authMiddleware.authenticate, userRouter);
 
 app.use((req, res, next) => {
-    res.status(404).send("Page not found");
+    res.status(404).send("Đường dẫn của url không đúng");
 });
 
 app.listen(3000, () => {
