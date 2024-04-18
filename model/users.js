@@ -3,7 +3,6 @@ import collections from '../database/collection.js';
 
 const userSchema = new mongoose.Schema({
     userName: String,
-    avatar: String,
     email: String,
     password: String
 });

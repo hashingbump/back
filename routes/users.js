@@ -1,45 +1,23 @@
 import {Router} from 'express';
 import multer from 'multer';
-import usersController from '../controllers/users.js';
-import postsController from '../controllers/posts.js';
-import commentsController from '../controllers/comments.js';
-import authMiddleware from '../middlewares/auth.js';
+import moviesController from '../controllers/movies.js';
 
 const userRouter = Router();
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-userRouter.post('/add', usersController.createNewUser);
+userRouter.post('/movies/add', upload.single('file'), moviesController.createNewMovie);
 
-userRouter.post('/update', upload.single('file'), usersController.updateUser);
+userRouter.post('/movies/update/:movieId', upload.single('file'), moviesController.updateMovie);
 
-userRouter.post('/delete', usersController.deleteUser);
+userRouter.get('/movies/yearSort/:type', moviesController.getMovies);
 
-userRouter.get('/id', usersController.getUserId);
+userRouter.get('/movies/keywordName', moviesController.getMoviesOfName);
 
-//userRouter.get('/deleteAll', usersController.deleteAllUser);
+userRouter.get('/movies/all', moviesController.getAllMovies);
 
-userRouter.post('/posts/add', upload.array('files'), postsController.createNewPost);
+userRouter.post('/movies/delete/:movieId', moviesController.deleteMovie);
 
-userRouter.post('/posts/:postId', upload.array('files'), postsController.updatePost);
-
-userRouter.get('/posts', postsController.getAllPosts);
-
-userRouter.get('/posts/personal', postsController.getPersonalPosts);
-
-userRouter.post('/posts/delete/:postId', postsController.deletePost);
-
-//userRouter.get('/posts/deleteAll', postsController.deleteAllPosts);
-
-userRouter.post('/verifyToken', authMiddleware.authenticate);
-
-userRouter.post('/addAccessToken', authMiddleware.addAccessToken);
-
-userRouter.post('/addRefreshToken', authMiddleware.addRefreshToken);
-
-userRouter.post('/refreshToken/delete', authMiddleware.deleteRefreshToken);
-
-userRouter.post('/login', authMiddleware.loginUser);
 
 export default userRouter;

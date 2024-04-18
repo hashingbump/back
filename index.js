@@ -1,27 +1,29 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import userRouter from './routes/users.js';
+import authMiddleware from './middlewares/auth.js';
 import cors from 'cors';
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-let database;
-
 async function connectDatabase() {
     try {
-        await mongoose.connect('mongodb+srv://vtk:vtk@naksu.8wtkqy5.mongodb.net/?retryWrites=true&w=majority&appName=naksu');
+        await mongoose.connect('mongodb+srv://vtk:vtk@naksu.8wtkqy5.mongodb.net/hoan?retryWrites=true&w=majority&appName=naksu');
         console.log('Connect toi DB thanh cong');
-        database = mongoose.connection.useDb('test');
     } catch (error) {
         console.log("Error: ", error);
     }
 }
-
 connectDatabase(); 
+app.use('/verifyToken', authMiddleware.verifyToken);
 
-app.use('/users', userRouter);
+app.use('/register', authMiddleware.RegisterUser);
+
+app.use('/login', authMiddleware.loginUser);
+
+app.use('/users', authMiddleware.authenticate, userRouter);
 
 app.use((req, res, next) => {
     res.status(404).send("Page not found");

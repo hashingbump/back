@@ -1,12 +1,38 @@
 import UsersModel from "../model/users.js";
-import refreshTokensModel from '../model/refreshTokens.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const authMiddleware = {
-    loginUser: async (req, res, next) => {
+    RegisterUser: async (req, res) => {
+        try {
+            const { userName, email, password } = req.body;
+    
+            if(!userName || !email || !password)
+                throw new Error('Du lieu dau vao co loi');
+            
+            const existEmail = await UsersModel.findOne({ email });
+            if (existEmail)
+                throw new Error('Email đã tồn tại');
+    
+            const salt = bcrypt.genSaltSync(10);
+            const hashedPassword = bcrypt.hashSync(password, salt);
+    
+            const createdUser = await UsersModel.create({
+                userName,
+                email,
+                password: hashedPassword
+            });
+    
+            res.status(201).send({ data: createdUser });
+        } catch (error) {
+            res.status(403).send({ message: error.message });
+        }
+    },
+    loginUser: async (req, res) => {
         try {
             const { email, password } = req.body;
+            if(!email || !password)
+                throw new Error('Du lieu dau vao co loi');
 
             const user = await UsersModel.findOne({ email });
 
@@ -16,83 +42,49 @@ const authMiddleware = {
 
             if (!isPasswordValid) throw new Error('Mật khẩu không đúng');
 
-            const accessToken = jwt.sign({ userId: user._id }, 'hoan', { expiresIn: '30m' });
-            const refreshToken = jwt.sign({ userId: user._id }, 'hoanrefresh', { expiresIn: '12h' });
+            const accessToken = jwt.sign({ userId: user._id }, 'hoan', { expiresIn: '24h' });
 
-            await refreshTokensModel.create({ refreshToken });
-
-            res.json({token: accessToken, refreshToken: refreshToken});
-
+            res.json({token: accessToken});
         } catch (error) {
             res.status(401).send(error.message);
         }
     },
-    authenticate: (req, res) => {    
+    authenticate: (req, res, next) => {    
         try{
-            const token = req.headers['authorization'].split(' ')[1];
-            const {typeToken} = req.body;
+            const au = req.headers['authorization'];
+            if(!au) return res.json({ data: 'Token missing' });
 
-            if(!typeToken) return res.json({ data: 'Type token must not determine' });
-
+            const token = au.split(' ')[1];
             if (!token) return res.json({ data: 'Token missing' });
-        
-            if(typeToken === 'AT'){
-                jwt.verify(token, 'hoan', (err, decoded) => {
-                    if (err) {
-                        res.json({ data: 'Token invalid' });
-                    } else {
-                        res.json({ data: 'Token valid' });
-                    }
-                });
-            }else{
-                jwt.verify(token, 'hoanrefresh', (err, decoded) => {
-                    if (err) {
-                        res.json({ data: 'RFToken invalid' });
-                    } else {
-                        res.json({ data: 'RFToken valid' });
-                    }
-                });
-            }
+
+            jwt.verify(token, 'hoan', (err, decoded) => {
+                if (err) {
+                    return res.json({ data: 'Token invalid' });
+                } else {
+                    next();
+                }
+            });
         } catch (error) {
-            res.status(401).send(error.message);
+            res.json({ data: 'Token missing' });
         }
     },
-    addAccessToken: async (req, res) => {
+    verifyToken: (req, res) => {    
         try{
-            const userId = req.userId;
+            const au = req.headers['authorization'];
+            if(!au) return res.json({ data: 'Token missing' });
 
-            const accessToken = jwt.sign({ userId: userId }, 'hoan', { expiresIn: '30m' });
+            const token = au.split(' ')[1];
+            if (!token) return res.json({ data: 'Token missing' });
 
-            res.json({token: accessToken });
-
-        }catch(error){
-            res.status(401).send(error.message);
-        }
-    },
-    addRefreshToken: async (req, res) => {
-        try{
-            const userId = req.userId;
-
-            const refreshToken = jwt.sign({ userId: userId }, 'hoanrefresh', { expiresIn: '12h' });
-
-            await refreshTokensModel.create({ refreshToken });
-
-            res.json({refreshToken: refreshToken });
-        }catch(error){
-            res.status(401).send(error.message);
-        }
-    },
-    deleteRefreshToken: async (req, res) => {
-        try{
-            const refreshToken = req.headers['authorization'].split(' ')[1];
-
-            if (!refreshToken) res.json({ message: 'Token missing' });
-
-            await refreshTokensModel.deleteOne({ refreshToken });
-
-            res.send('Xoa thanh cong');
-        }catch(error){
-            res.status(401).send(error.message);
+            jwt.verify(token, 'hoan', (err, decoded) => {
+                if (err) {
+                    return res.json({ data: 'Token invalid' });
+                } else {
+                    return res.json({ data: 'Token valid' });
+                }
+            });
+        } catch (error) {
+            res.json({ data: 'Token missing' });
         }
     }
 }    
